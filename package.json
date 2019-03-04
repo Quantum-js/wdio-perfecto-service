@@ -1,0 +1,78 @@
+{
+  "name": "wdio-perfecto-service",
+  "version": "0.1.0",
+  "description": "WebdriverIO service for Perfecto Lab integration",
+  "author": "Kulin, Eyal, Hadas",
+  "license": "ISC",
+  "main": "index.js",
+  "homepage": "",
+  "keywords": [
+    "wdio-service",
+    "perfecto",
+    "webdriver",
+    "selenium",
+    "test",
+    "wdio"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PerfectoMobileSA/wdio-perfecto-service.git"
+  },
+  "bugs": {
+    "url": "https://github.com/PerfectoMobileSA/wdio-perfecto-service/issues"
+  },
+  "scripts": {
+    "build": "run-s clean compile",
+    "ci": "run-s test",
+    "clean": "rm -rf ./build ./coverage",
+    "compile": "babel lib -d build --source-maps inline",
+    "eslint": "eslint ./lib ./test ./*.js",
+    "release": "run-s release:patch",
+    "release:patch": "np patch",
+    "release:minor": "np minor",
+    "release:major": "np major",
+    "start": "node ./build",
+    "test": "run-s eslint test:unit",
+    "test:unit": "jest --coverage",
+    "watch": "npm run compile -- --watch"
+  },
+  "devDependencies": {
+    "integer": "^2.1.0",
+    "chai": "^4.1.2",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-eslint": "^8.0.1",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.6.0",
+    "babel-preset-stage-0": "^6.24.1",
+    "cucumber-tag-expressions": "^1.1.1",
+    "eslint": "^4.8.0",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-node": "^5.2.0",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "jest": "^21.2.1",
+    "np": "^2.16.0",
+    "npm-run-all": "^4.1.2",
+    "shelljs": "^0.7.8"
+  },
+  "jest": {
+    "coverageThreshold": {
+      "global": {
+        "branches": 90,
+        "functions": 80,
+        "lines": 90,
+        "statements": 90
+      }
+    }
+  },
+  "dependencies": {
+    "babel-runtime": "^6.26.0",
+    "node-netstat": "^1.4.2",
+    "perfecto-reporting": "^2.5.1",
+    "lodash": "latest"
+  }
+}
