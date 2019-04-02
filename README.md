@@ -3,10 +3,11 @@ WDIO Perfecto Labs Service
 
 ***
 
-> A WebdriverIO service. It updates the job metadata ('name', 'passed', 'tags', 'public', 'build', 'custom-data').
+> A WebdriverIO service that provides integration into Perfecto Lab, and [DigitalZoom Reports](https://developers.perfectomobile.com/display/PD/DigitalZoom+Reporting).
+ 
+This service support cucumber version wdio version 4 and "wdio-cucumber-framework": "0.3.1".
 
 ## Installation
-
 The easiest way is to keep `wdio-perfecto-service` as a devDependency in your `package.json`.
 
 ```json
@@ -37,7 +38,7 @@ export.config = {
   services: ['perfecto'],
   user: process.env.PERFECTO_USERNAME,
   securityToken: process.env.PERFECTO_SECURITY_TOKEN,
-  exTags
+  implicitTimeout: 500,
 
   // ...
 };
@@ -55,8 +56,31 @@ Your securityToken
 
 Type: `String`
 
+### implicitTimeout
+Default timeout (in ms) for findElement or findElements commands.
+
+Type: `number`
+
+Default: `500`
 ## perfectoOpts
 
+```js
+// wdio.conf.js
+export.config = {
+  // ...
+  
+  perfectoOpts:{
+      executionTags:['Tag1','Tag2'],
+      customFields:{
+          customField1: example,
+          customField2: true
+      },
+      fastWeb:false
+  },
+
+  // ...
+};
+```
 ### executionTags
 executionTags 
 
@@ -70,7 +94,7 @@ Type: `Array` of CustomField object
 ### fastWeb
 fastWeb 
 
-Type: `Boolean` default falseo
+Type: `Boolean` default false
 
 ## Development
 
