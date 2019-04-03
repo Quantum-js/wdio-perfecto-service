@@ -42,7 +42,6 @@ export.config = {
   services: ['perfecto'],
   user: process.env.PERFECTO_USERNAME,
   securityToken: process.env.PERFECTO_SECURITY_TOKEN,
-  implicitTimeout: 0,
 
   // ...
 };
@@ -60,12 +59,6 @@ Your securityToken
 
 Type: `String`
 
-### implicitTimeout
-Default timeout (in ms) for findElement or findElements commands.
-
-Type: `number`
-
-Default: `0`
 ## perfectoOpts
 
 ```js
