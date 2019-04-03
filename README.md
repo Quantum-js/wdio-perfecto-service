@@ -5,7 +5,11 @@ WDIO Perfecto Labs Service
 
 > A WebdriverIO service that provides integration into Perfecto Lab, and [DigitalZoom Reports](https://developers.perfectomobile.com/display/PD/DigitalZoom+Reporting).
  
-This service support cucumber version wdio version 4 and "wdio-cucumber-framework": "0.3.1".
+This service supports these versions of WDIO and Cucumber: 
+    
+    "cucumber": "3.0.0",
+    "wdio-cucumber-framework": "0.3.1",
+    "webdriverio": "^4.14.1"
 
 ## Installation
 The easiest way is to keep `wdio-perfecto-service` as a devDependency in your `package.json`.
@@ -38,7 +42,7 @@ export.config = {
   services: ['perfecto'],
   user: process.env.PERFECTO_USERNAME,
   securityToken: process.env.PERFECTO_SECURITY_TOKEN,
-  implicitTimeout: 500,
+  implicitTimeout: 0,
 
   // ...
 };
@@ -61,7 +65,7 @@ Default timeout (in ms) for findElement or findElements commands.
 
 Type: `number`
 
-Default: `500`
+Default: `0`
 ## perfectoOpts
 
 ```js
@@ -96,10 +100,28 @@ fastWeb
 
 Type: `Boolean` default false
 
-## Development
+## Commands
 
 All commands can be found in the package.json. The most important are:
 
+### ```waitForVisible``` Command
+Override  WDIO ```waitForVisible``` command. If more then one element with selector exists, wait for only one element to be visible. For original command use ```browser._waitForVisible``` 
+### ```waitForEnabled``` Command
+Override  WDIO ```waitForEnabled``` command. Wait for one element to be enabled. For original command use ```browser._waitForEnabled``` 
+### ```waitForSelected``` Command
+Override  WDIO ```waitForSelected``` command. Wait for one element to be selected. For original command use ```browser._waitForSelected``` 
+### ```waitForText``` Command
+Override  WDIO ```waitForText``` command. Wait for one element to be text. For original command use ```browser._waitForText``` 
+### ```waitForValue``` Command
+Override  WDIO ```waitForValue``` command. Wait for one element to be selected. For original command use ```browser._waitForValue``` 
+### ```setValueImmediate``` Command
+Send a sequence of key strokes to an element in one go.
+
+####Usage
+browser.setValueImmediate(selector, value)
+
+  
+# Development
 Watch changes:
 
 ```sh
