@@ -34,7 +34,7 @@ Instructions on how to install `WebdriverIO` can be found [here.](http://webdriv
 
 In order to use the service you need to set `user` and `securityToken` in your `wdio.conf.js` file. It will automatically
 use Perfecto Lab to run your integration tests. 
-To obtain your security token - click [here.](https://developers.perfectomobile.com/display/PD/Security+Token)
+To obtain your security token - click [here](https://developers.perfectomobile.com/display/PD/Security+Token)
 
 ```js
 // wdio.conf.js
@@ -51,7 +51,7 @@ export.config = {
 ## Config Options
 
 ### user
-Your Perfecto Lab Lab username.
+Your Perfecto Lab username.
 
 Type: `String`
 
@@ -62,7 +62,7 @@ Type: `String`
 
 ## perfectoOpts
 Add tags & custom fields to optimize the reports - enables filtering and analysis options. 
-See [here.](https://developers.perfectomobile.com/display/PD/Basic+Test+Result+Concepts) for info on the concept. The syntax required is below. 
+See [here](https://developers.perfectomobile.com/display/PD/Basic+Test+Result+Concepts) for info on the concept. The syntax required is below. 
 
 ```js
 // wdio.conf.js
@@ -97,7 +97,7 @@ Type: `Boolean` default false
 ## Commands
 
 The below commands have been modified to work with the Perfecto platform. 
-The complete list of Perfecto commands, proprietary extensions to Selenium/Appium see [here.](https://developers.perfectomobile.com/display/PD/Perfecto+Commands)
+The complete list of Perfecto commands, proprietary extensions to Selenium/Appium see [here](https://developers.perfectomobile.com/display/PD/Perfecto+Commands)
 
 ### ```waitForVisible``` Command
 Override  WDIO ```waitForVisible``` command. Takes the first element that matches the selector and wait for it to be visible. For original command use ```browser._waitForVisible``` 
@@ -109,11 +109,10 @@ Override  WDIO ```waitForSelected``` command. Takes the first element that match
 Override  WDIO ```waitForText``` command. Takes the first element that matches the selector and wait for it to be text. For original command use ```browser._waitForText``` 
 ### ```waitForValue``` Command
 Override  WDIO ```waitForValue``` command. Takes the first element that matches the selector and wait for it to be selected. For original command use ```browser._waitForValue``` 
-### ```setValueImmediate``` Command
-Send a sequence of key strokes to an element in one go.
-
-####Usage
-browser.setValueImmediate(selector, value)
+### ```setValueImmediate``` Command 
+Sends the entire string in one event to optimize performance and reliability. 
+### Usage
+browser.setValueImmediate(selector, value)  
 
   
 # Development
