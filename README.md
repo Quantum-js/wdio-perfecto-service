@@ -3,7 +3,7 @@ WDIO Perfecto Labs Service
 
 ***
 
-> A WebdriverIO service that provides integration into Perfecto Lab, and [DigitalZoom Reports](https://developers.perfectomobile.com/display/PD/DigitalZoom+Reporting).
+> A WebdriverIO service that provides execution on real mobile devices & desktop browsers with the  Perfecto Lab, and [DigitalZoom Reports](https://developers.perfectomobile.com/display/PD/DigitalZoom+Reporting).
  
 This service supports these versions of WDIO and Cucumber: 
     
@@ -34,6 +34,7 @@ Instructions on how to install `WebdriverIO` can be found [here.](http://webdriv
 
 In order to use the service you need to set `user` and `securityToken` in your `wdio.conf.js` file. It will automatically
 use Perfecto Lab to run your integration tests. 
+To obtain your security token - click [here.](https://developers.perfectomobile.com/display/PD/Security+Token)
 
 ```js
 // wdio.conf.js
@@ -50,7 +51,7 @@ export.config = {
 ## Config Options
 
 ### user
-Your Perfecto Lab Labs username.
+Your Perfecto Lab Lab username.
 
 Type: `String`
 
@@ -60,6 +61,8 @@ Your securityToken
 Type: `String`
 
 ## perfectoOpts
+Add tags & custom fields to optimize the reports - enables filtering and analysis options. 
+See [here.](https://developers.perfectomobile.com/display/PD/Basic+Test+Result+Concepts) for info on the concept. The syntax required is below. 
 
 ```js
 // wdio.conf.js
@@ -71,8 +74,7 @@ export.config = {
       customFields:{
           customField1: example,
           customField2: true
-      },
-      fastWeb:false
+      }
   },
 
   // ...
@@ -88,25 +90,25 @@ customFields
 
 Type: `Array` of CustomField object
 
-### fastWeb
-fastWeb 
+
 
 Type: `Boolean` default false
 
 ## Commands
 
-All commands can be found in the package.json. The most important are:
+The below commands have been modified to work with the Perfecto platform. 
+The complete list of Perfecto commands, proprietary extensions to Selenium/Appium see [here.](https://developers.perfectomobile.com/display/PD/Perfecto+Commands)
 
 ### ```waitForVisible``` Command
-Override  WDIO ```waitForVisible``` command. If more then one element with selector exists, wait for only one element to be visible. For original command use ```browser._waitForVisible``` 
+Override  WDIO ```waitForVisible``` command. Takes the first element that matches the selector and wait for it to be visible. For original command use ```browser._waitForVisible``` 
 ### ```waitForEnabled``` Command
-Override  WDIO ```waitForEnabled``` command. Wait for one element to be enabled. For original command use ```browser._waitForEnabled``` 
+Override  WDIO ```waitForEnabled``` command. Takes the first element that matches the selector and wait for it to be enabled. For original command use ```browser._waitForEnabled``` 
 ### ```waitForSelected``` Command
-Override  WDIO ```waitForSelected``` command. Wait for one element to be selected. For original command use ```browser._waitForSelected``` 
+Override  WDIO ```waitForSelected``` command. Takes the first element that matches the selector and wait for it to be selected. For original command use ```browser._waitForSelected``` 
 ### ```waitForText``` Command
-Override  WDIO ```waitForText``` command. Wait for one element to be text. For original command use ```browser._waitForText``` 
+Override  WDIO ```waitForText``` command. Takes the first element that matches the selector and wait for it to be text. For original command use ```browser._waitForText``` 
 ### ```waitForValue``` Command
-Override  WDIO ```waitForValue``` command. Wait for one element to be selected. For original command use ```browser._waitForValue``` 
+Override  WDIO ```waitForValue``` command. Takes the first element that matches the selector and wait for it to be selected. For original command use ```browser._waitForValue``` 
 ### ```setValueImmediate``` Command
 Send a sequence of key strokes to an element in one go.
 
