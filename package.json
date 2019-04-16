@@ -1,6 +1,6 @@
 {
   "name": "wdio-perfecto-service",
-  "version": "0.1.4",
+  "version": "0.1.7",
   "description": "WebdriverIO service for Perfecto Lab integration",
   "author": "Kulin, Eyal, Hadas",
   "license": "ISC",
