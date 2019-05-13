@@ -93,6 +93,8 @@ Type: `Boolean` default false
 The below commands have been modified to work with the Perfecto platform. 
 The complete list of Perfecto commands, proprietary extensions to Selenium/Appium see [here](https://developers.perfectomobile.com/display/PD/Perfecto+Commands)
 
+### ```waitUntil``` Command
+Override  WDIO ```waitUntil``` command. It will make sure that the command is properly synchronous. For original command use ```browser._waitUntil``` 
 ### ```waitForVisible``` Command
 Override  WDIO ```waitForVisible``` command. Takes the first element that matches the selector and wait for it to be visible. For original command use ```browser._waitForVisible``` 
 ### ```waitForEnabled``` Command
