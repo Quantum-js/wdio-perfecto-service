@@ -1,6 +1,6 @@
 {
   "name": "wdio-perfecto-service",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "WebdriverIO service for Perfecto Lab integration",
   "author": "Kulin, Eyal, Hadas",
   "license": "ISC",
@@ -37,7 +37,6 @@
     "watch": "npm run compile -- --watch"
   },
   "devDependencies": {
-    "chai": "^4.1.2",
     "@babel/cli": "^7.2.3",
     "@babel/core": "^7.3.4",
     "@babel/preset-env": "^7.3.4",
@@ -47,8 +46,9 @@
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-stage-0": "^6.24.1",
+    "chai": "^4.1.2",
     "cucumber-tag-expressions": "^1.1.1",
-    "eslint": "^4.8.0",
+    "eslint": "^5.16.0",
     "eslint-config-standard": "^10.2.1",
     "eslint-plugin-import": "^2.7.0",
     "eslint-plugin-node": "^5.2.0",
