@@ -1,6 +1,6 @@
 {
   "name": "wdio-perfecto-service",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "WebdriverIO service for Perfecto Lab integration",
   "author": "Kulin, Eyal, Hadas",
   "license": "ISC",
@@ -55,7 +55,7 @@
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
     "jest": "^24.8.0",
-    "np": "^2.16.0",
+    "np": "^5.0.1",
     "npm-run-all": "^4.1.2",
     "shelljs": "^0.7.8"
   },
