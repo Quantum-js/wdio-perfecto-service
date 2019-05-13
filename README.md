@@ -41,7 +41,6 @@ To obtain your security token - click [here](https://developers.perfectomobile.c
 export.config = {
   // ...
   services: ['perfecto'],
-  user: process.env.PERFECTO_USERNAME,
   securityToken: process.env.PERFECTO_SECURITY_TOKEN,
 
   // ...
@@ -49,11 +48,6 @@ export.config = {
 ```
 
 ## Config Options
-
-### user
-Your Perfecto Lab username.
-
-Type: `String`
 
 ### securityToken
 Your securityToken 
