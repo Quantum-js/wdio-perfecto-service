@@ -102,9 +102,9 @@ Override  WDIO ```waitForEnabled``` command. Takes the first element that matche
 ### ```waitForSelected``` Command
 Override  WDIO ```waitForSelected``` command. Takes the first element that matches the selector and wait for it to be selected. For original command use ```browser._waitForSelected``` 
 ### ```waitForText``` Command
-Override  WDIO ```waitForText``` command. Takes the first element that matches the selector and wait for it to be text. For original command use ```browser._waitForText``` 
+Override  WDIO ```waitForText``` command. Takes the first element that matches the selector and wait for it to have text. For original command use ```browser._waitForText``` 
 ### ```waitForValue``` Command
-Override  WDIO ```waitForValue``` command. Takes the first element that matches the selector and wait for it to be selected. For original command use ```browser._waitForValue``` 
+Override  WDIO ```waitForValue``` command. Takes the first element that matches the selector and wait for it to have value. For original command use ```browser._waitForValue``` 
 ### ```setValueImmediate``` Command 
 Sends the entire string in one event to optimize performance and reliability. 
 ### Usage
