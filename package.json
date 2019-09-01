@@ -1,6 +1,6 @@
 {
   "name": "wdio-perfecto-service",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "WebdriverIO service for Perfecto Lab integration",
   "author": "Kulin, Eyal, Hadas",
   "license": "ISC",
@@ -71,11 +71,12 @@
   },
   "dependencies": {
     "babel-runtime": "^6.26.0",
+    "clear-module": "^4.0.0",
+    "glob": "latest",
+    "integer": "^2.1.0",
+    "lodash": "^4.17.15",
     "node-netstat": "^1.4.2",
     "perfecto-reporting": "^2.5.1",
-    "lodash": "latest",
-    "request": "latest",
-    "glob": "latest",
-    "integer": "^2.1.0"
+    "request": "latest"
   }
 }
