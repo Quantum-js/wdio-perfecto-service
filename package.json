@@ -32,7 +32,7 @@
     "release:minor": "np minor",
     "release:major": "np major",
     "start": "node ./build",
-    "test": "run-s eslint test:unit",
+    "test": "run-s eslint",
     "test:unit": "jest --coverage",
     "watch": "npm run compile -- --watch"
   },
