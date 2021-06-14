@@ -1,0 +1,4 @@
+build/**
+node_modules/**
+**/*.gen.ts
+**/*.d.ts

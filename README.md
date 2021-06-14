@@ -17,7 +17,7 @@ The easiest way is to keep `wdio-perfecto-service` as a devDependency in your `p
 ```json
 {
   "devDependencies": {
-    "wdio-perfecto-service": "~0.1.0"
+    "wdio-perfecto-service": "~1.0.1"
   }
 }
 ```
@@ -32,7 +32,7 @@ Instructions on how to install `WebdriverIO` can be found [here.](http://webdriv
 
 ## Configuration
 
-In order to use the service you need to set `user` and `securityToken` in your `wdio.conf.js` file. It will automatically
+In order to use the service you need to set `securityToken` in your `wdio.conf.js` file. It will automatically
 use Perfecto Lab to run your integration tests. 
 To obtain your security token - click [here](https://developers.perfectomobile.com/display/PD/Security+Token)
 
@@ -40,8 +40,14 @@ To obtain your security token - click [here](https://developers.perfectomobile.c
 // wdio.conf.js
 export.config = {
   // ...
-  services: ['perfecto'],
-  securityToken: process.env.PERFECTO_SECURITY_TOKEN,
+  services: [
+    [
+      'perfecto',
+      {
+        securityToken: process.env.PERFECTO_SECURITY_TOKEN
+      }
+    ]
+  ],
 
   // ...
 };
@@ -68,7 +74,8 @@ export.config = {
       customFields:{
           customField1: example,
           customField2: true
-      }
+      },
+      failureReasons: failureReasons
   },
 
   // ...
@@ -84,7 +91,10 @@ customFields
 
 Type: `Array` of CustomField object
 
+### failureReasons
+failureReasons
 
+Type: failureReasons 
 
 Type: `Boolean` default false
 

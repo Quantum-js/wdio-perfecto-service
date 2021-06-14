@@ -1,0 +1,7 @@
+coverage
+build
+node_modules
+package
+Src
+*.log
+*.tgz
