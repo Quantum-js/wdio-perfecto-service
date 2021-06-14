@@ -2,5 +2,6 @@ coverage
 build
 node_modules
 package
+.vscode
 *.log
 *.tgz
