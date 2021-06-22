@@ -9,14 +9,16 @@ import {
 } from '@wdio/cucumber-framework'
 import _ from 'lodash'
 import {
-  PerfectoOptsConfig,
-  Messages,
-  PerfectoCapabilities,
-  PerfectoBrowser,
-  Capabilities,
-  Browser
-} from './types'
+  // PerfectoOptsConfig,
+  Messages
+  // PerfectoCapabilities,
+  // PerfectoBrowser,
+  // Capabilities,
+  // Browser
+} from '../perfecto-service'
 import NewTimer from './util/NewTimer'
+import type { ServiceOption} from 'webdriverio'
+import { Browser } from '@wdio/sync'
 
 const Reporting = require('perfecto-reporting')
 const log = logger('wdio-perfecto-service')
@@ -27,10 +29,13 @@ function getAppParams(by: string, app: string) {
   return params
 }
 
+
+// export type Browser = WebdriverIO.BrowserObject & WebdriverIO.MultiRemoteBrowserObject;
 function parseFailureJsonFile(actualMessage: string): Messages | undefined {
   if (actualMessage === '') return undefined
   const failureReasons: Array<Messages> =
-    (browser.config as PerfectoOptsConfig).perfectoOpts?.failureReasons || []
+    browser.config.perfectoOpts?.failureReasons || []
+    // browser.config as PerfectoOptsConfig).perfectoOpts?.failureReasons || []
   for (const i in failureReasons) {
     const messages: Messages = failureReasons[i]
     if (
@@ -107,13 +112,11 @@ function waitUntilOverwrite(this: any,
 
 export default class perfectoService implements WebdriverIO.ServiceInstance {
   private _browser?: Browser
-  // | WebdriverIO.BrowserObject
-  // | WebdriverIO.MultiRemoteBrowser
   // | PerfectoBrowser
 
   constructor(
-    private _options: PerfectoOptsConfig,
-    private _capabilities: Capabilities,
+    private _options: ServiceOption,
+    private _capabilities: WebDriver.DesiredCapabilities,
     // | WebDriver.Capabilities
     // | WebDriver.DesiredCapabilities,
     private _config: WebdriverIO.Config
@@ -126,11 +129,12 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
    * @param _specs         specs to be run in the worker process
    * @param browser       instance of created browser/device session
    */
-  before(_capabilities: Capabilities, _specs: string[], browser: Browser) {
+  before(_capabilities: WebDriver.DesiredCapabilities, _specs: string[], browser: ) : void{
     this._browser = browser
 
     this._browser.overwriteCommand('waitUntil', waitUntilOverwrite)
     this._browser.overwriteCommand('waitUntil', waitUntilOverwrite, true)
+    
     /**
      * add perfecto commands
      */
@@ -142,7 +146,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
      * Report commands
      */
     this._browser.addCommand(
-      'perfectoVerify',
+      'verify',
       function (assertFnc: (arg0: any) => void, message: string): boolean {
         try {
           // browser.debug();
@@ -150,37 +154,38 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
           // console.log('assertFnc', assertFnc)
           // console.log('message', message)
 
-          browser.perfectoReportAssert(message, true)
+          browser.reportAssert(message, true)
           return true
         } catch (err) {
           console.log('verify in catch' + err.toString()) // browser.debug();
 
           // browser.failedOnVerify++
           // browser.failMessages.push(err)
-          browser.perfectoReportAssert(err.toString(), false)
+          browser.reportAssert(err.toString(), false)
           return false
         }
       }
     )
 
     this._browser.addCommand(
-      'perfectoAssert',
+      'assert',
       function (assertFnc: (arg0: any) => void, message: string): boolean {
+        // TODOb add try 
         assertFnc(message)
-        browser.perfectoReportAssert(message, true)
+        browser.reportAssert(message, true)
         return true
       }
     )
 
     this._browser.addCommand(
-      'perfectoReportAssert',
+      'assert',
       function (message: string, status: boolean): void {
         browser.reportingClient.reportiumAssert(message, status)
       }
     )
 
     this._browser.addCommand(
-      'perfectoReportComment',
+      'reportComment',
       function (message: string): void {
         const params = {
           text: message
@@ -194,14 +199,14 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
      */
 
     this._browser.addCommand(
-      'perfectoStartApp',
+      'startApp',
       function (by: string, app: string): void {
         browser.execute('mobile:application:open', getAppParams(by, app))
       }
     )
     // by = 'name' or 'identifier'
     this._browser.addCommand(
-      'perfectoCloseApp',
+      'closeApp',
       function (by: string, app: string, ignoreExceptions = false): void {
         try {
           browser.execute('mobile:application:close', getAppParams(by, app))
@@ -213,7 +218,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
       }
     )
     this._browser.addCommand(
-      'perfectoInstallApp',
+      'installApp',
       function (
         filePath: string,
         shouldInstrument: boolean,
@@ -234,71 +239,71 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
 
     // by = 'name' or 'identifier'
     this._browser.addCommand(
-      'perfectoCleanApp',
+      'cleanApp',
       function (by: string, app: string): void {
         browser.execute('mobile:application:clean', getAppParams(by, app))
       }
     )
     // by = 'name' or 'identifier'
     this._browser.addCommand(
-      'perfectoUninstallApp',
+      'uninstallApp',
       function (by: string, app: string): void {
         browser.execute('mobile:application:uninstall', getAppParams(by, app))
       }
     )
-    this._browser.addCommand('perfectoUninstallAllApps', function (): void {
+    this._browser.addCommand('UninstallAllApps', function (): void {
       browser.execute('mobile:application:reset', {})
     })
     this._browser.addCommand(
-      'perfectoGetAppInfo',
+      'getAppInfo',
       function (property: string): string {
         const params = {
           property: property
         }
         const result: any = browser.execute('mobile:application:info', params)
-        log.info('perfectoGetAppInfo - ${result}')
+        log.info('GetAppInfo - ${result}')
         return result.value
       }
     )
 
     this._browser.addCommand(
-      'perfectoVerifyAppInfo',
+      'verifyAppInfo',
       function (propertyName: string, propertyValue: any) {
         const message = `${propertyName} should be ${propertyValue}`
         const assertMethod = () =>
           expect(propertyValue).toEqual(
-            browser.perfectoGetAppInfo(propertyName).toString()
+            browser.getAppInfo(propertyName).toString()
           )
-        //const assertMethod = () => assert.equal(propertyValue, browser.perfectoGetAppInfo(propertyName), message)
-        return browser.perfectoVerify(assertMethod, message)
+        //const assertMethod = () => assert.equal(propertyValue, browser.GetAppInfo(propertyName), message)
+        return browser.verify(assertMethod, message)
       }
     )
     this._browser.addCommand(
-      'perfectoAssertAppInfo',
+      'assertAppInfo',
       function (propertyName: string, propertyValue: any) {
         const message = `${propertyName} must be ${propertyValue}`
         const assertMethod = () =>
           expect(propertyValue).toEqual(
-            browser.perfectoGetAppInfo(propertyName).toString()
+            browser.getAppInfo(propertyName).toString()
           )
-        //const assertMethod = () => assert.equal(propertyValue, browser.perfectoGetAppInfo(propertyName), message)
-        return browser.perfectoAssert(assertMethod, message)
+        //const assertMethod = () => assert.equal(propertyValue, browser.GetAppInfo(propertyName), message)
+        return browser.assert(assertMethod, message)
       }
     )
     this._browser.addCommand(
-      'perfectoWaitForPresentTextVisual',
+      'waitForPresentTextVisual',
       function (text: string, timeout: number): void {
         const message = `Text: ${text} should be present after ${timeout} seconds`
         const assertMethod = () =>
           expect('true').toEqual(
-            browser.perfectoFindText(text, timeout).toString()
+            browser.findText(text, timeout).toString()
           )
-        //onst assertMethod = () =>assert.equal(browser.perfectoFindText(text, timeout), 'true', `Text: ${text} should be present after ${seconds} seconds`)
-        browser.perfectoAssert(assertMethod, message)
+        //onst assertMethod = () =>assert.equal(browser.FindText(text, timeout), 'true', `Text: ${text} should be present after ${seconds} seconds`)
+        browser.assert(assertMethod, message)
       }
     )
     this._browser.addCommand(
-      'perfectoWaitForPresentImageVisual',
+      'waitForPresentImageVisual',
       function (
         img: string,
         timeout: number,
@@ -308,17 +313,17 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
         const message = `Image: ${img} should be visible after ${timeout} seconds`
         const assertMethod = () =>
           expect('true').toEqual(
-            browser.perfectoFindImage(img, timeout, threshold, needleBound)
+            browser.findImage(img, timeout, threshold, needleBound)
           )
-        //onst assertMethod = () =>assert.equal(browser.perfectoFindText(text, timeout), 'true', `Text: ${text} should be present after ${seconds} seconds`)
-        browser.perfectoAssert(assertMethod, message)
-        //assert.equal(browser.perfectoFindImage(img, timeout, threshold, needleBound), 'true', `Image: ${img} should be visible after ${seconds} seconds`)
+        //onst assertMethod = () =>assert.equal(browser.FindText(text, timeout), 'true', `Text: ${text} should be present after ${seconds} seconds`)
+        browser.assert(assertMethod, message)
+        //assert.equal(browser.FindImage(img, timeout, threshold, needleBound), 'true', `Image: ${img} should be visible after ${seconds} seconds`)
       }
     )
     // pass external parameters
     // TODO : test vars
     this._browser.addCommand(
-      'perfectoFindImage',
+      'findImage',
       function (
         img: string,
         timeout: number,
@@ -338,13 +343,13 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
         //params['imageBounds.needleBound'] = needleBound
 
         const result: any = browser.execute('mobile:checkpoint:image', params)
-        log.info('perfectoFindImage - ${result}')
+        log.info('FindImage - ${result}')
         return result.value
       }
     )
     // TODO: check passing seconds 60, 180 - getting threading errors
     this._browser.addCommand(
-      'perfectoAssertVisualImage',
+      'assertVisualImage',
       function (
         img: string,
         timeout: number,
@@ -354,15 +359,15 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
         const message = `Image: ${img} must be visible after ${timeout} seconds`
         const assertMethod = () =>
           expect('true').toEqual(
-            browser.perfectoFindImage(img, timeout, threshold, needleBound)
+            browser.findImage(img, timeout, threshold, needleBound)
           )
 
-        //const assertMethod = () => assert.equal(browser.perfectoFindImage(img, timeout, threshold, needleBound), 'true', message)
-        return browser.perfectoAssert(assertMethod, message)
+        //const assertMethod = () => assert.equal(browser.FindImage(img, timeout, threshold, needleBound), 'true', message)
+        return browser.assert(assertMethod, message)
       }
     )
     this._browser.addCommand(
-      'perfectoVerifyVisualImage',
+      'verifyVisualImage',
       function (
         img: string,
         timeout: any,
@@ -370,12 +375,12 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
         needleBound = 25
       ): boolean {
         const message = `Image: ${img} should be visible after ${timeout} seconds`
-        // const assertMethod = () => assert.equal(browser.perfectoFindImage(img, timeout, threshold, needleBound), 'true', message)
+        // const assertMethod = () => assert.equal(browser.FindImage(img, timeout, threshold, needleBound), 'true', message)
         const assertMethod = () =>
           expect('true').toEqual(
-            browser.perfectoFindImage(img, timeout, threshold, needleBound)
+            browser.findImage(img, timeout, threshold, needleBound)
           )
-        return browser.perfectoVerify(assertMethod, message)
+        return browser.verify(assertMethod, message)
       }
     )
     /**
@@ -388,7 +393,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
      * @return true if found or false if not found
      */
     this._browser.addCommand(
-      'perfectoFindText',
+      'findText',
       function (text: string, timeout: number): string {
         const params: any = {
           content: text,
@@ -399,29 +404,29 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
           params.timeout = timeout
         }
         const result: any = this.execute('mobile:checkpoint:text', params)
-        log.info('perfectoFindText - ${result}')
+        log.info('FindText - ${result}')
         return result.value
       }
     )
     // TODO: check verify options
     this._browser.addCommand(
-      'perfectoAssertVisualText',
+      'assertVisualText',
       function (text: string): boolean {
         const message = `Text: ${text} must be present`
         const assertMethod = () =>
-          expect('true').toEqual(browser.perfectoFindText(text, 180))
+          expect('true').toEqual(browser.findText(text, 180))
 
-        //                const assertMethod = () => assert.equal(browser.perfectoFindText(text, 180), 'true', message)
-        return browser.perfectoAssert(assertMethod, message)
+        //                const assertMethod = () => assert.equal(browser.FindText(text, 180), 'true', message)
+        return browser.assert(assertMethod, message)
       }
     )
     this._browser.addCommand(
-      'perfectoVerifyVisualText',
+      'verifyVisualText',
       function (text: string): boolean {
         const message = `Text: ${text} should be present`
         const assertMethod = () =>
-          expect('true').toEqual(browser.perfectoFindText(text, 180))
-        return browser.perfectoVerify(assertMethod, message)
+          expect('true').toEqual(browser.findText(text, 180))
+        return browser.verify(assertMethod, message)
       }
     )
 
@@ -440,7 +445,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
      *            the single or sequence of keys to click
      */
     this._browser.addCommand(
-      'perfectoPressKey',
+      'pressKey',
       function (keySequence: string): void {
         const params = {
           keySequence: keySequence
@@ -450,7 +455,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     )
 
     /**
-     * perfectoorms the swipe gesture according to the start and end coordinates.
+     * orms the swipe gesture according to the start and end coordinates.
      * <p>
      * Example swipe left:<br/>
      * start: 60%,50% end: 10%,50%
@@ -463,7 +468,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
      *            percentage(recommended).
      */
     this._browser.addCommand(
-      'perfectoSwipe',
+      'swipe',
       function (start: string, end: string): void {
         const params = {
           start: start,
@@ -474,7 +479,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     )
 
     /**
-     * perfectoorms the tap gesture according to location coordinates with durations in
+     * orms the tap gesture according to location coordinates with durations in
      * seconds.
      * <p>
      *
@@ -483,10 +488,10 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
      *            percentage(recommended).
      *
      * @param seconds
-     *            The duration, in seconds, for perfectoorming the touch operation.
+     *            The duration, in seconds, for orming the touch operation.
      */
     this._browser.addCommand(
-      'perfectoLongTouch',
+      'longTouch',
       function (point: string, seconds = 2): void {
         const params = {
           location: point,
@@ -498,13 +503,13 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     )
 
     /**
-     * perfectoorms the touch gesture according to the point coordinates.
+     * orms the touch gesture according to the point coordinates.
      *
      * @param point
      *            write in format of x,y. can be in pixels or
      *            percentage(recommended).
      */
-    this._browser.addCommand('perfectoTouch', function (point: string): void {
+    this._browser.addCommand('touch', function (point: string): void {
       const params = {
         location: point // 50%,50%
       }
@@ -513,14 +518,14 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     })
 
     /**
-     * perfectoorms the double touch gesture according to the point coordinates.
+     * orms the double touch gesture according to the point coordinates.
      *
      * @param point
      *            write in format of x,y. can be in pixels or
      *            percentage(recommended).
      */
     this._browser.addCommand(
-      'perfectoDoubleTouch',
+      'doubleTouch',
       function (point: string): void {
         const params = {
           location: point, // 50%,50%
@@ -534,7 +539,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
      * Hides the virtual keyboard display.
      *
      */
-    this._browser.addCommand('perfectoHideKeyboard', function (): void {
+    this._browser.addCommand('hideKeyboard', function (): void {
       const params = {
         mode: 'off'
       }
@@ -551,7 +556,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
      */
     // TODO: need additional description.
     this._browser.addCommand(
-      'perfectoRotateDevice',
+      'rotateDevice',
       function (by: string | number, restValue: string): void {
         const params: any = {}
         params[by] = restValue
@@ -561,7 +566,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
 
     // by = 'address' or 'coordinates'
     this._browser.addCommand(
-      'perfectoSetLocation',
+      'setLocation',
       function (by: string | number, location: string): void {
         const params: any = {}
         params[by] = location
@@ -571,35 +576,35 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     )
 
     this._browser.addCommand(
-      'perfectoAssertLocation',
+      'assertLocation',
       function (location: string): boolean {
-        const deviceLocation = browser.perfectoGetDeviceLocation()
+        const deviceLocation = browser.getDeviceLocation()
         const message = `Device Location ${deviceLocation.toString()} must be equal ${location}`
         // const assertMethod = () => assert.equal(deviceLocation, location, message)
         const assertMethod = () => expect(location).toEqual(deviceLocation)
-        return browser.perfectoAssert(assertMethod, message)
+        return browser.assert(assertMethod, message)
       }
     )
 
     this._browser.addCommand(
-      'perfectoVerifyLocation',
+      'verifyLocation',
       function (location: string): boolean {
-        const deviceLocation = browser.perfectoGetDeviceLocation()
+        const deviceLocation = browser.getDeviceLocation()
         const message = `Device Location ${deviceLocation.toString()} should be equal ${location}`
         const assertMethod = () => expect(location).toEqual(deviceLocation)
-        return browser.perfectoVerify(assertMethod, message)
+        return browser.verify(assertMethod, message)
       }
     )
 
-    this._browser.addCommand('perfectoGetDeviceLocation', function (): string {
+    this._browser.addCommand('getDeviceLocation', function (): string {
       return (browser.execute('mobile:location:get', {}) as unknown) as string
     })
 
-    this._browser.addCommand('perfectoResetLocation', function (): void {
+    this._browser.addCommand('resetLocation', function (): void {
       browser.execute('mobile:location:reset', {})
     })
 
-    this._browser.addCommand('perfectoGoToHomeScreen', function (): void {
+    this._browser.addCommand('goToHomeScreen', function (): void {
       const params = {
         target: 'All'
       }
@@ -607,7 +612,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     })
 
     this._browser.addCommand(
-      'perfectoLockDevice',
+      'lockDevice',
       function (sec: number): void {
         const params = {
           timeout: sec
@@ -617,7 +622,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     )
 
     this._browser.addCommand(
-      'perfectoSetTimezone',
+      'setTimezone',
       function (timezone: string): void {
         const params = {
           timezone: timezone
@@ -627,36 +632,36 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
       }
     )
 
-    this._browser.addCommand('perfectoGetTimezone', function (): string {
+    this._browser.addCommand('getTimezone', function (): string {
       return (browser.execute('mobile:timezone:get', {}) as unknown) as string
     })
 
     this._browser.addCommand(
-      'perfectoAssertTimezone',
+      'assertTimezone',
       function (timezone: string): boolean {
-        const deviceTimezone = browser.perfectoGetTimezone()
+        const deviceTimezone = browser.getTimezone()
         const message = `Device timezone ${deviceTimezone} must be equal ${timezone}`
         const assertMethod = () => expect(timezone).toEqual(deviceTimezone)
-        return browser.perfectoAssert(assertMethod, message)
+        return browser.assert(assertMethod, message)
       }
     )
 
     this._browser.addCommand(
-      'perfectoVerifyTimezone',
+      'verifyTimezone',
       function (timezone: any) {
-        const deviceTimezone = browser.perfectoGetTimezone()
+        const deviceTimezone = browser.getTimezone()
         const message = `Device timezone ${deviceTimezone} should be equal ${timezone}`
         const assertMethod = () => expect(timezone).toEqual(deviceTimezone)
-        return browser.perfectoVerify(assertMethod, message)
+        return browser.verify(assertMethod, message)
       }
     )
 
-    this._browser.addCommand('perfectoResetTimezone', function (): void {
+    this._browser.addCommand('resetTimezone', function (): void {
       browser.execute('mobile:timezone:reset', {})
     })
 
     this._browser.addCommand(
-      'perfectoTakeScreenshot',
+      'takeScreenshot',
       function (repositoryPath: string, shouldSave: boolean): void {
         const params: any = {}
         if (shouldSave) {
@@ -668,7 +673,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
 
     // by = 'name' or 'identifier'
     this._browser.addCommand(
-      'perfectoStartImageInjection',
+      'startImageInjection',
       function (
         repositoryFile: string,
         by: string | number,
@@ -680,12 +685,12 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
         browser.execute('mobile:image.injection:start', params)
       }
     )
-    this._browser.addCommand('perfectoStopImageInjection', function (): void {
+    this._browser.addCommand('stopImageInjection', function (): void {
       browser.execute('mobile:image.injection:stop', {})
     })
 
     this._browser.addCommand(
-      'perfectoSetFingerprint',
+      'setFingerprint',
       function (
         by: string | number,
         identifier: string,
@@ -706,7 +711,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     )
 
     this._browser.addCommand(
-      'perfectoSetSensorAuthentication',
+      'setSensorAuthentication',
       function (
         by: string,
         identifier: string,
@@ -722,19 +727,19 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
       }
     )
 
-    this._browser.addCommand('perfectoGenerateHAR', function (): void {
+    this._browser.addCommand('generateHAR', function (): void {
       const params = {
         generateHarFile: 'true'
       }
       browser.execute('mobile:vnetwork:start', params)
     })
 
-    this._browser.addCommand('perfectoStopGenerateHAR', function (): void {
+    this._browser.addCommand('stopGenerateHAR', function (): void {
       browser.execute('mobile:vnetwork:stop', {})
     })
 
     this._browser.addCommand(
-      'perfectoAudioInject',
+      'audioInject',
       function (filePath: string): void {
         const params = {
           key: filePath,
@@ -744,7 +749,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
       }
     )
 
-    this._browser.addCommand('perfectoVerifyAudioReceived', function (): void {
+    this._browser.addCommand('verifyAudioReceived', function (): void {
       // The below settings have been working with best and consistent results for
       // different devices. In case these settings does not work for you then try
       // changing the configurations.
@@ -758,20 +763,20 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
         'mobile:checkpoint:audio',
         params
       ) as unknown) as boolean
-      browser.perfectoReportAssert(
+      browser.reportAssert(
         'Audio checkpoint status ',
         audioCheckpointStatus
       )
     })
 
     this._browser.addCommand(
-      'perfectoGetDeviceProperty',
+      'getDeviceProperty',
       function (property: string): string {
         const params = {
           property: property
         }
         const result: any = browser.execute('mobile:handset:info', params)
-        log.info('perfectoGetDeviceProperty - ${result}')
+        log.info('getDeviceProperty - ${result}')
         return result.value
       }
     )
@@ -881,7 +886,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
    * For CucumberJS
    */
   beforeFeature(): void {
-    const perfectoOpts = (browser.config as PerfectoOptsConfig).perfectoOpts
+    const perfectoOpts = browser.config.perfectoOpts
     const tags = perfectoOpts?.executionTags
     const customFields: any = []
 
@@ -906,7 +911,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     // const client : any = new Reporting.Perfecto.PerfectoReportingClient(
     //   perfectoExecutionContext
     // )
-    ((browser as unknown) as PerfectoBrowser).reportingClient = new Reporting.Perfecto.PerfectoReportingClient(
+    browser.reportingClient = new Reporting.Perfecto.PerfectoReportingClient(
       new Reporting.Perfecto.PerfectoExecutionContext({
         webdriver: {
           executeScript: (command: any, params: any) => {
@@ -931,7 +936,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     }
     const testContext: any = {}
     testContext.tags = tags
-    ;((browser as unknown) as PerfectoBrowser).reportingClient.testStart(
+    browser.reportingClient.testStart(
       scenario.name,
       testContext
     )
@@ -944,7 +949,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     result: CucumberHookResult
   ): void {
     if (result.status === 'passed') {
-      ((browser as unknown) as PerfectoBrowser).reportingClient.testStop({
+      browser.reportingClient.testStop({
         status: Reporting.Constants.results.passed
       })
     } else if (result.status === 'failed') {
@@ -966,9 +971,8 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
 
         const testContext: any = {}
         testContext.tags = message.Tags
-        testContext.customFields = customFields(
-          (browser as unknown) as PerfectoBrowser
-        ).reportingClient.testStop(
+        testContext.customFields = customFields
+        browser.reportingClient.testStop(
           {
             status: Reporting.Constants.results.failed,
             message: msg + '/n/n' + actualExceptionMessage,
@@ -977,7 +981,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
           testContext
         )
       } else {
-        ((browser as unknown) as PerfectoBrowser).reportingClient.testStop({
+        browser.reportingClient.testStop({
           status: Reporting.Constants.results.failed,
           message: msg + '/n/n' + actualExceptionMessage
         })
@@ -989,7 +993,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
    * Runs before a Cucumber step
    */
   beforeStep(step: StepData): void {
-    ((browser as unknown) as PerfectoBrowser).reportingClient.stepStart(
+    browser.reportingClient.stepStart(
       `${step.step.step.keyword} ${step.step.step.text}`
     )
   }
@@ -1004,7 +1008,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     //async after(result, capabilities, specs) : {
     log.info(
       '\n\nReport: ' +
-        (browser.capabilities as PerfectoCapabilities).testGridReportUrl
+        browser.capabilities.testGridReportUrl
     )
   }
 }

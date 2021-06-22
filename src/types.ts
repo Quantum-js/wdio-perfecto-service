@@ -1,163 +1,164 @@
-/// <reference types="expect-webdriverio"/>
+// /// <reference types="expect-webdriverio"/>
 
-import { List } from 'lodash'
+// import { Config } from '@wdio/sync'
+// import { List } from 'lodash'
 
-export type Capabilities = WebDriver.Capabilities &
-  WebdriverIO.MultiRemoteCapabilities &
-  PerfectoCapabilities
+// export type Capabilities = WebDriver.Capabilities &
+//   WebdriverIO.MultiRemoteCapabilities &
+//   PerfectoCapabilities
 
-export type Browser = WebdriverIO.BrowserObject &
-  WebdriverIO.MultiRemoteBrowserObject &
-  PerfectoBrowser
+// export type Browser = WebdriverIO.BrowserObject &
+//   WebdriverIO.MultiRemoteBrowserObject &
+//   PerfectoBrowser
   
-export interface PerfectoCapabilities {
-  testGridReportUrl?: string
-}
+// export interface PerfectoCapabilities extends WebDriver.Capabilities {
+//   testGridReportUrl?: string
+// }
 
-export interface PerfectoOptsConfig {
-  perfectoOpts?: perfectoOpts
-}
+// export interface PerfectoOptsConfig {
+//   perfectoOpts?: perfectoOpts
+// }
 
-export interface perfectoOpts {
-  /**
-   * Execution Tags to optimize the reports
-   */
-  executionTags?: string[]
-  /**
-   * customFields to optimize the reports
-   */
-  customFields?: any
+// export interface perfectoOpts {
+//   /**
+//    * Execution Tags to optimize the reports
+//    */
+//   executionTags?: string[]
+//   /**
+//    * customFields to optimize the reports
+//    */
+//   customFields?: any
 
-  /**
-   * FailureR eason Config file location
-   */
-  failureReasons?: Array<Messages>
+//   /**
+//    * FailureR eason Config file location
+//    */
+//   failureReasons?: Array<Messages>
 
-  overwriteWaitUntil?: boolean
-}
+//   overwriteWaitUntil?: boolean
+// }
 
-export interface PerfectoServiceConfig {
-  securityToken?: string
-}
-export interface PerfectoBrowser {
-  perfectoVerify(assertFnc: any, message: string): boolean
-  perfectoAssert(assertFnc: any, message: string): boolean
+// export interface PerfectoServiceConfig {
+//   securityToken?: string
+// }
+// export interface PerfectoBrowser {
+//   verify(assertFnc: any, message: string): boolean
+//   assert(assertFnc: any, message: string): boolean
 
-  perfectoStartApp(by: string, app: string): void
-  perfectoCloseApp(by: string, app: string, ignoreExceptions: boolean): void
-  perfectoReportAssert(message: string, status: boolean): void
-  perfectoInstallApp(
-    filePath: string,
-    shouldInstrument: boolean,
-    shouldSensorInstrument: boolean
-  ): void
-  perfectoCleanApp(by: string, app: string): void
-  perfectoUninstallApp(by: string, app: string): void
-  perfectoUninstallAllApps(): void
-  perfectoGetAppInfo(property: string): string
-  perfectoVerifyAppInfo(propertyName: string, propertyValue: any): void
+//   startApp(by: string, app: string): void
+//   closeApp(by: string, app: string, ignoreExceptions: boolean): void
+//   reportAssert(message: string, status: boolean): void
+//   installApp(
+//     filePath: string,
+//     shouldInstrument: boolean,
+//     shouldSensorInstrument: boolean
+//   ): void
+//   cleanApp(by: string, app: string): void
+//   uninstallApp(by: string, app: string): void
+//   uninstallAllApps(): void
+//   getAppInfo(property: string): string
+//   verifyAppInfo(propertyName: string, propertyValue: any): void
 
-  perfectoAssertAppInfo(propertyName: string, propertyValue: any): any
-  perfectoWaitForPresentTextVisual(text: string, timeout: number): void
-  perfectoWaitForPresentImageVisual(
-    img: string,
-    timeout: number,
-    threshold: number,
-    needleBound: number
-  ): void
+//   assertAppInfo(propertyName: string, propertyValue: any): any
+//   waitForPresentTextVisual(text: string, timeout: number): void
+//   waitForPresentImageVisual(
+//     img: string,
+//     timeout: number,
+//     threshold: number,
+//     needleBound: number
+//   ): void
 
-  perfectoFindImage(
-    img: string,
-    timeout: number,
-    threshold?: number,
-    needleBound?: number
-  ): string
+//   findImage(
+//     img: string,
+//     timeout: number,
+//     threshold?: number,
+//     needleBound?: number
+//   ): string
 
-  perfectoAssertVisualImage(
-    img: string,
-    timeout: number,
-    threshold: number,
-    needleBound: number
-  ): boolean
-  perfectoVerifyVisualImage(
-    img: string,
-    timeout: number,
-    threshold: number,
-    needleBound: number
-  ): boolean
+//   assertVisualImage(
+//     img: string,
+//     timeout: number,
+//     threshold: number,
+//     needleBound: number
+//   ): boolean
+//   verifyVisualImage(
+//     img: string,
+//     timeout: number,
+//     threshold: number,
+//     needleBound: number
+//   ): boolean
 
-  perfectoFindText(text: string, timeout: number): string
-  // TODO: check verify options
-  perfectoAssertVisualText(text: string): boolean
-  perfectoVerifyVisualText(text: string): boolean
+//   findText(text: string, timeout: number): string
+//   // TODO: check verify options
+//   assertVisualText(text: string): boolean
+//   verifyVisualText(text: string): boolean
 
-  perfectoPressKey(keySequence: string): void
+//   pressKey(keySequence: string): void
 
-  perfectoSwipe(start: string, end: string): void
-  perfectoLongTouch(point: string, seconds: number): void
-  perfectoTouch(point: string): void
-  perfectoDoubleTouch(point: string): void
-  perfectoHideKeyboard(): void
-  perfectoRotateDevice(by: string | number, restValue: string): void
-  perfectoSetLocation(by: string | number, location: string): void
-  perfectoAssertLocation(location: string): void
-  perfectoVerifyLocation(location: string): boolean
-  perfectoGetDeviceLocation(): string
-  perfectoResetLocation(): void
-  perfectoGoToHomeScreen(): void
-  perfectoLockDevice(sec: number): void
-  perfectoSetTimezone(timezone: string): void
-  perfectoGetTimezone(): string
+//   swipe(start: string, end: string): void
+//   longTouch(point: string, seconds: number): void
+//   touch(point: string): void
+//   doubleTouch(point: string): void
+//   hideKeyboard(): void
+//   rotateDevice(by: string | number, restValue: string): void
+//   setLocation(by: string | number, location: string): void
+//   assertLocation(location: string): void
+//   verifyLocation(location: string): boolean
+//   getDeviceLocation(): string
+//   resetLocation(): void
+//   goToHomeScreen(): void
+//   lockDevice(sec: number): void
+//   setTimezone(timezone: string): void
+//   getTimezone(): string
 
-  perfectoAssertTimezone(timezone: string): boolean
-  perfectoVerifyTimezone(timezone: string): boolean
-  perfectoResetTimezone(): void
+//   assertTimezone(timezone: string): boolean
+//   verifyTimezone(timezone: string): boolean
+//   resetTimezone(): void
 
-  perfectoTakeScreenshot(repositoryPath: string, shouldSave: boolean): void
-  perfectoStartImageInjection(
-    repositoryFile: string,
-    by: string | number,
-    app: string
-  ): void
-  perfectoStopImageInjection(): void
+//   takeScreenshot(repositoryPath: string, shouldSave: boolean): void
+//   startImageInjection(
+//     repositoryFile: string,
+//     by: string | number,
+//     app: string
+//   ): void
+//   stopImageInjection(): void
 
-  perfectoSetFingerprint(
-    by: string | number,
-    identifier: string,
-    resultAuth: string,
-    errorType: string
-  ): void
+//   setFingerprint(
+//     by: string | number,
+//     identifier: string,
+//     resultAuth: string,
+//     errorType: string
+//   ): void
 
-  perfectoSetSensorAuthentication(
-    by: string,
-    identifier: string,
-    resultAuth: string,
-    errorType: string
-  ): void
+//   setSensorAuthentication(
+//     by: string,
+//     identifier: string,
+//     resultAuth: string,
+//     errorType: string
+//   ): void
 
-  perfectoGenerateHAR(): void
-  perfectoStopGenerateHAR(): void
-  perfectoAudioInject(filePath: string): void
+//   generateHAR(): void
+//   stopGenerateHAR(): void
+//   audioInject(filePath: string): void
 
-  perfectoVerifyAudioReceived(): void
-  perfectoGetDeviceProperty(property: string): string
-  // perfectoTouchObject(selector: string, addressBar: string): void;
-  // perfectoSlideObjectLeft(selector: string) : void;
+//   verifyAudioReceived(): void
+//   getDeviceProperty(property: string): string
+//   // TouchObject(selector: string, addressBar: string): void;
+//   // SlideObjectLeft(selector: string) : void;
 
-  // perfectoSlideObject(selector: string, xStartMult: number, xEndMult: number, yStartMult: number, yEndMult: number) : void;
-  // perfectoGetScale() : number;
-  // perfectoGetOffset(addressBar: string, context? : string) : number;
-  // perfectoSetPickerWheel(locator: string, direction: any, value: { replaceAll: (arg0: string, arg1: string) => any }, offset: number): void;
-  // perfectoPickerwheelGet(locator: string) : any;
-  // perfectoPickerwheelStep(locator: string , direction: any, offset: number) : void;
+//   // SlideObject(selector: string, xStartMult: number, xEndMult: number, yStartMult: number, yEndMult: number) : void;
+//   // GetScale() : number;
+//   // GetOffset(addressBar: string, context? : string) : number;
+//   // SetPickerWheel(locator: string, direction: any, value: { replaceAll: (arg0: string, arg1: string) => any }, offset: number): void;
+//   // PickerwheelGet(locator: string) : any;
+//   // PickerwheelStep(locator: string , direction: any, offset: number) : void;
 
-  reportingClient?: any
-}
+//   reportingClient?: any
+// }
 
-export interface Messages {
-  StackTraceErrors: List<string>
-  CustomFields: List<string>
-  Tags: List<string>
-  CustomError: string
-  JsonFile: string
-}
+// export interface Messages {
+//   StackTraceErrors: List<string>
+//   CustomFields: List<string>
+//   Tags: List<string>
+//   CustomError: string
+//   JsonFile: string
+// }

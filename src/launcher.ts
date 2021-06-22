@@ -1,5 +1,5 @@
 import logger from '@wdio/logger'
-import { PerfectoServiceConfig } from './types'
+import { PerfectoServiceConfig } from '../perfecto-service'
 
 const log = logger('wdio-perfecto-service')
 export default class PerfectoLauncher {

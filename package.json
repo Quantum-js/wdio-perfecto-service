@@ -1,11 +1,12 @@
 {
-  "name": "wdio-perfecto-service",
-  "version": "1.0.9",
+  "name": "wdio-perfectotest-service",
+  "version": "1.0.12",
   "description": "WebdriverIO service for Perfecto Lab integration",
   "keywords": [
     "perfecto",
     "webdriverio",
     "wdio",
+    
     "wdio-service"
   ],
   "contributors": [
