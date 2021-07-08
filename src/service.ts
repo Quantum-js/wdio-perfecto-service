@@ -2,23 +2,15 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
 import logger from '@wdio/logger'
-import {
-  CucumberHookObject,
-  StepData,
-  CucumberHookResult
-} from '@wdio/cucumber-framework'
 import _ from 'lodash'
 import {
-  // PerfectoOptsConfig,
   Messages
-  // PerfectoCapabilities,
-  // PerfectoBrowser,
-  // Capabilities,
-  // Browser
 } from '../perfecto-service'
 import NewTimer from './util/NewTimer'
-import type { ServiceOption} from 'webdriverio'
-import { Browser } from '@wdio/sync'
+import { messages } from '@cucumber/messages'
+import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types'
+import { Frameworks } from '@wdio/types'
+
 
 const Reporting = require('perfecto-reporting')
 const log = logger('wdio-perfecto-service')
@@ -110,12 +102,12 @@ function waitUntilOverwrite(this: any,
 }
 
 
-export default class perfectoService implements WebdriverIO.ServiceInstance {
-  private _browser?: Browser
-  // | PerfectoBrowser
+export class perfectoService {
+
+  private _browser?:  WebdriverIO.BrowserObject & WebdriverIO.MultiRemoteBrowserObject
 
   constructor(
-    private _options: ServiceOption,
+    private _options: WebdriverIO.ServiceOption,
     private _capabilities: WebDriver.DesiredCapabilities,
     // | WebDriver.Capabilities
     // | WebDriver.DesiredCapabilities,
@@ -129,7 +121,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
    * @param _specs         specs to be run in the worker process
    * @param browser       instance of created browser/device session
    */
-  before(_capabilities: WebDriver.DesiredCapabilities, _specs: string[], browser: ) : void{
+  before(_capabilities: WebDriver.DesiredCapabilities, _specs: string[], browser:  WebdriverIO.BrowserObject | WebdriverIO.MultiRemoteBrowserObject ) : void{
     this._browser = browser
 
     this._browser.overwriteCommand('waitUntil', waitUntilOverwrite)
@@ -139,8 +131,6 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
      * add perfecto commands
      */
 
-
-   
 
     /**
      * Report commands
@@ -403,7 +393,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
         if (!_.isEmpty(timeout)) {
           params.timeout = timeout
         }
-        const result: any = this.execute('mobile:checkpoint:text', params)
+        const result: any = browser.execute('mobile:checkpoint:text', params)
         log.info('FindText - ${result}')
         return result.value
       }
@@ -450,7 +440,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
         const params = {
           keySequence: keySequence
         }
-        this.execute('mobile:presskey', params)
+        browser.execute('mobile:presskey', params)
       }
     )
 
@@ -474,7 +464,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
           start: start,
           end: end
         }
-        this.execute('mobile:touch:swipe', params)
+        browser.execute('mobile:touch:swipe', params)
       }
     )
 
@@ -882,10 +872,28 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     return response
   }
 
+ 
+     /**
+     * Cucumber Hooks
+     *
+     * Runs before a Cucumber Feature.
+     * @param {String}                   uri      path to feature file
+     * @param {GherkinDocument.IFeature} feature  Cucumber feature object
+     */
+    // beforeFeature: function (uri, feature) {
+    // },
+
   /**
    * For CucumberJS
    */
-  beforeFeature(): void {
+  /**
+     *
+     * Runs before a Cucumber Feature.
+     * @param _uri      path to feature file
+     * @param _feature  Cucumber feature object
+     */
+ beforeFeature?(_uri: string, _feature: messages.GherkinDocument.IFeature): void {
+  // beforeFeature(): void {
     const perfectoOpts = browser.config.perfectoOpts
     const tags = perfectoOpts?.executionTags
     const customFields: any = []
@@ -923,16 +931,23 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
       })
     )
   }
+   /**
+     *
+     * Runs before a Cucumber Scenario.
+     * @param {ITestCaseHookParameter} world world object containing information on pickle and test step
+     */
+ beforeScenario?(world : ITestCaseHookParameter): void {
 
-  beforeScenario?(
-    _uri: string,
-    _feature: CucumberHookObject,
-    scenario: CucumberHookObject
-  ): void {
+  // beforeScenario?(
+  //   _uri: string,
+  //   _feature: CucumberHookObject,
+  //   scenario: CucumberHookObject
+  // ): void {
     const tags = []
-    // eslint-disable-next-line no-plusplus
-    for (let i = 0; i < scenario.tags.length; i++) {
-      tags.push(scenario.tags[i].name)
+    const scenario = world.pickle
+    const scenarioTags = scenario.tags || []
+    for (let i = 0; i < scenarioTags.length; i++) {
+      tags.push((scenarioTags[i]).name)
     }
     const testContext: any = {}
     testContext.tags = tags
@@ -942,19 +957,36 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
     )
   }
 
-  afterScenario?(
-    _uri: string,
-    _feature: CucumberHookObject,
-    _scenario: CucumberHookObject,
-    result: CucumberHookResult
-  ): void {
-    if (result.status === 'passed') {
+  // /**
+  //  *
+  //  * Runs before a Cucumber Scenario.
+  //  * @param {ITestCaseHookParameter} world  world object containing information on pickle and test step
+  //  * @param {Object}                 result results object containing scenario results
+  //  * @param {boolean}                result.passed   true if scenario has passed
+  //  * @param {string}                 result.error    error stack if scenario failed
+  //  * @param {number}                 result.duration duration of scenario in milliseconds
+  //  */
+  // afterScenario (world, result): void {
+
+
+  // }
+  /**
+   *
+   * Runs before a Cucumber Scenario.
+   * @param {ITestCaseHookParameter} world  world object containing information on pickle and test step
+   * @param {Object}                 result results object containing scenario results
+   * @param {boolean}                result.passed   true if scenario has passed
+   * @param {string}                 result.error    error stack if scenario failed
+   * @param {number}                 result.duration duration of scenario in milliseconds
+   */
+  afterScenario?(world: ITestCaseHookParameter, result: Frameworks.PickleResult): void {
+    if (result.passed) {
       browser.reportingClient.testStop({
         status: Reporting.Constants.results.passed
       })
-    } else if (result.status === 'failed') {
-      const actualExceptionMessage: string = result.exception?.stack || ''
-      const msg: string = result.exception?.message || 'An error occurred'
+    } else {
+      const actualExceptionMessage: string = result.error || '' //?.stack || ''
+      const msg = 'An error occurred' //result.exception?.message || 'An error occurred'
       const message: Messages | undefined = parseFailureJsonFile(
         actualExceptionMessage
       )
@@ -980,23 +1012,27 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
           },
           testContext
         )
-      } else {
-        browser.reportingClient.testStop({
-          status: Reporting.Constants.results.failed,
-          message: msg + '/n/n' + actualExceptionMessage
-        })
+      // } else {
+      //   browser.reportingClient.testStop({
+      //     status: Reporting.Constants.results.failed,
+      //     message: msg + '/n/n' + actualExceptionMessage
+      //   })
       }
     }
   }
 
   /**
-   * Runs before a Cucumber step
+   *
+   * Runs before a Cucumber Step.
+   * @param {Pickle.IPickleStep} step     step data
+   * @param {IPickle}            scenario scenario pickle
    */
-  beforeStep(step: StepData): void {
+  beforeStep (step: messages.Pickle.PickleStep, _scenario: messages.Pickle) {
     browser.reportingClient.stepStart(
-      `${step.step.step.keyword} ${step.step.step.text}`
+      `${step.argument} ${step.text}`
     )
   }
+
   // /**
   //  * Runs after a Cucumber step
   //  */
@@ -1004,7 +1040,7 @@ export default class perfectoService implements WebdriverIO.ServiceInstance {
   //     log.info('*********** After step. Status= ' + result.passed)
   // }
 
-  after(_result: number, _caps: any, _specs: string[]): void {
+  after(result: number, _caps: any, _specs: string[]): void {
     //async after(result, capabilities, specs) : {
     log.info(
       '\n\nReport: ' +

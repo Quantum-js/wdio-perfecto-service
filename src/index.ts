@@ -1,5 +1,5 @@
 import PerfectoLauncher from './launcher'
-import PerfectoService from './service'
+import { perfectoService as PerfectoService } from './service'
 
 export default PerfectoService
 export const launcher = PerfectoLauncher
