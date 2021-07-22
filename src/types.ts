@@ -1,7 +1,7 @@
 // /// <reference types="expect-webdriverio"/>
 
 // import { Config } from '@wdio/sync'
-// import { List } from 'lodash'
+import { List } from 'lodash'
 
 // export type Capabilities = WebDriver.Capabilities &
 //   WebdriverIO.MultiRemoteCapabilities &
@@ -37,9 +37,9 @@
 //   overwriteWaitUntil?: boolean
 // }
 
-// export interface PerfectoServiceConfig {
-//   securityToken?: string
-// }
+export interface PerfectoServiceConfig {
+  securityToken?: string
+}
 // export interface PerfectoBrowser {
 //   verify(assertFnc: any, message: string): boolean
 //   assert(assertFnc: any, message: string): boolean
@@ -155,10 +155,10 @@
 //   reportingClient?: any
 // }
 
-// export interface Messages {
-//   StackTraceErrors: List<string>
-//   CustomFields: List<string>
-//   Tags: List<string>
-//   CustomError: string
-//   JsonFile: string
-// }
+export interface Messages {
+  StackTraceErrors: List<string>
+  CustomFields: List<string>
+  Tags: List<string>
+  CustomError: string
+  JsonFile: string
+}

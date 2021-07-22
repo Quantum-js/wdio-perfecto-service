@@ -1,12 +1,11 @@
 {
-  "extends": "@tsconfig/node14/tsconfig.json",
   "compilerOptions": {
     "target": "es2020",
     "module": "commonjs",
     "declaration": true,
     "outDir": "./build",
     "strict": true,
-    "types": ["webdriver", "webdriverio", "node", "@wdio/logger","@wdio/cucumber-framework","@wdio/sync"],
+    "types": ["webdriver", "webdriverio", "node", "@wdio/logger","@wdio/cucumber-framework","@wdio/sync", "expect-webdriverio", "@wdio/types"],
     "lib": ["es2020"],
     "esModuleInterop": true,
     "skipLibCheck": true,

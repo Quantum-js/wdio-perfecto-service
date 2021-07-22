@@ -1,16 +1,17 @@
-/* eslint-disable no-unexpected-multiline */
+/* eslint-disable @typescript-eslint/no-namespace */
+/* eslint-disable @typescript-eslint/no-empty-interface */
 /* eslint-disable @typescript-eslint/no-var-requires */
+
 
 import logger from '@wdio/logger'
 import _ from 'lodash'
-import {
-  Messages
-} from '../perfecto-service'
 import NewTimer from './util/NewTimer'
 import { messages } from '@cucumber/messages'
 import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types'
-import { Frameworks } from '@wdio/types'
-
+import type { Services, Capabilities, Options, Frameworks , FunctionProperties} from '@wdio/types'
+import type { Browser, MultiRemoteBrowser } from 'webdriverio'
+import { PerfectoServiceConfig, Messages } from './types'
+import { parseFailureJsonFile } from './util/utils'
 
 const Reporting = require('perfecto-reporting')
 const log = logger('wdio-perfecto-service')
@@ -22,96 +23,14 @@ function getAppParams(by: string, app: string) {
 }
 
 
-// export type Browser = WebdriverIO.BrowserObject & WebdriverIO.MultiRemoteBrowserObject;
-function parseFailureJsonFile(actualMessage: string): Messages | undefined {
-  if (actualMessage === '') return undefined
-  const failureReasons: Array<Messages> =
-    browser.config.perfectoOpts?.failureReasons || []
-    // browser.config as PerfectoOptsConfig).perfectoOpts?.failureReasons || []
-  for (const i in failureReasons) {
-    const messages: Messages = failureReasons[i]
-    if (
-      messages.StackTraceErrors === null ||
-      messages.StackTraceErrors === undefined
-    ) {
-      log.info(
-        'Failure Reasons JSON file has wrong formmat, please read here https://developers.perfectomobile.com/pages/viewpage.action?pageId=31103917: '
-      )
-      return undefined
-    }
+export default class PerfectoService implements Services.ServiceInstance {
 
-    for (const i in messages.StackTraceErrors) {
-      log.info(messages.StackTraceErrors[i])
-      log.info(actualMessage)
-      if (actualMessage.includes(messages.StackTraceErrors[i])) {
-        return messages
-      }
-    }
-  }
-
-  return undefined
-}
-
-
-    // The function forces 'this' to be the element, instead of TS default of this class.
-function waitUntilOverwrite(this: any, 
-    _origFunction: any,
-    condition: () => boolean | Promise<boolean>,
-    {
-      timeout = browser.options.waitforTimeout,
-      interval = browser.options.waitforInterval,
-      timeoutMsg
-    }: any
-  ) {
-  if (typeof condition !== 'function') {
-    throw new Error('Condition is not a function')
-  }
-
-  /**
-   * ensure that timeout and interval are set properly
-   */
-  if (typeof timeout !== 'number') {
-    timeout = browser.options.waitforTimeout as number
-  }
-
-  if (typeof interval !== 'number') {
-    interval = browser.options.waitforInterval as number
-  }
-
-  const fn = condition.bind(this)
-  const timer = new NewTimer(
-    interval as number,
-    timeout as number,
-    fn,
-    true
-  )
-  return (timer as any).catch((e: Error) => {
-    if (e.message === 'timeout') {
-      if (typeof timeoutMsg === 'string') {
-        throw new Error(timeoutMsg)
-      }
-      throw new Error(`waitUntil condition timed out after ${timeout}ms`)
-    }
-
-    throw new Error(
-      `waitUntil condition failed with the following reason: ${
-        (e && e.message) || e
-      }`
-    )
-  })
-}
-
-
-export class perfectoService {
-
-  private _browser?:  WebdriverIO.BrowserObject & WebdriverIO.MultiRemoteBrowserObject
+  private _browser?: Browser<'sync'> | MultiRemoteBrowser<'sync'>
 
   constructor(
-    private _options: WebdriverIO.ServiceOption,
-    private _capabilities: WebDriver.DesiredCapabilities,
-    // | WebDriver.Capabilities
-    // | WebDriver.DesiredCapabilities,
-    private _config: WebdriverIO.Config
+    private _options: PerfectoServiceConfig,
+    private _caps: Capabilities.RemoteCapability,
+    private _config: Options.Testrunner
   ) {}
 
   /**
@@ -121,12 +40,115 @@ export class perfectoService {
    * @param _specs         specs to be run in the worker process
    * @param browser       instance of created browser/device session
    */
-  before(_capabilities: WebDriver.DesiredCapabilities, _specs: string[], browser:  WebdriverIO.BrowserObject | WebdriverIO.MultiRemoteBrowserObject ) : void{
+  before(
+    caps: Capabilities.RemoteCapability,
+    specs: string[],
+    browser: Browser<'sync'>
+  ) {
     this._browser = browser
 
-    this._browser.overwriteCommand('waitUntil', waitUntilOverwrite)
-    this._browser.overwriteCommand('waitUntil', waitUntilOverwrite, true)
-    
+    this._browser.overwriteCommand('waitUntil', this._waitUntilOverwrite.bind(this))
+    this._browser.overwriteCommand('waitUntil', this._waitUntilOverwrite.bind(this), true)
+
+    this._browser.addCommand('verify', this._verify.bind(this))
+    this._browser.addCommand('assert', this._assert.bind(this))
+    this._browser.addCommand('reportAssert', this._reportAssert.bind(this))
+    this._browser.addCommand('reportComment', this._reportComment.bind(this))
+    this._browser.addCommand('startApp', this._startApp.bind(this))
+    this._browser.addCommand('closeApp', this._closeApp.bind(this))
+    this._browser.addCommand('installApp', this._installApp.bind(this))
+    this._browser.addCommand('cleanApp', this._cleanApp.bind(this))
+    this._browser.addCommand('uninstallApp', this._uninstallApp.bind(this))
+    this._browser.addCommand('uninstallAllApps', this._uninstallAllApps.bind(this))
+    this._browser.addCommand('getAppInfo', this._getAppInfo.bind(this))
+    this._browser.addCommand('verifyAppInfo', this._verifyAppInfo.bind(this))
+    this._browser.addCommand('assertAppInfo', this._assertAppInfo.bind(this))
+    this._browser.addCommand('waitForPresentTextVisual', this._waitForPresentTextVisual.bind(this))
+    this._browser.addCommand('waitForPresentImageVisual', this._waitForPresentImageVisual.bind(this))
+    this._browser.addCommand('findImage', this._findImage.bind(this))
+
+    this._browser.addCommand('assertVisualImage', this._assertVisualImage.bind(this))
+    this._browser.addCommand('verifyVisualImage', this._verifyVisualImage.bind(this))
+    this._browser.addCommand('findText', this._findText.bind(this))
+    this._browser.addCommand('assertVisualText', this._assertVisualText.bind(this))
+    this._browser.addCommand('verifyVisualText', this._verifyVisualText.bind(this))
+    this._browser.addCommand('pressKey', this._pressKey.bind(this))
+    this._browser.addCommand('longTouch', this._longTouch.bind(this))
+    this._browser.addCommand('touch', this._touch.bind(this))
+    this._browser.addCommand('doubleTouch', this._doubleTouch.bind(this))
+    this._browser.addCommand('hideKeyboard', this._hideKeyboard.bind(this))
+    this._browser.addCommand('rotateDevice', this._rotateDevice.bind(this))
+    this._browser.addCommand('setLocation', this._setLocation.bind(this))
+    this._browser.addCommand('assertLocation', this._assertLocation.bind(this))
+    this._browser.addCommand('verifyLocation', this._verifyLocation.bind(this))
+    this._browser.addCommand('getDeviceLocation', this._getDeviceLocation.bind(this))
+    this._browser.addCommand('resetLocation', this._resetLocation.bind(this))
+    this._browser.addCommand('goToHomeScreen', this._goToHomeScreen.bind(this))
+    this._browser.addCommand('lockDevice', this._lockDevice.bind(this))
+    this._browser.addCommand('setTimezone', this._setTimezone.bind(this))
+    this._browser.addCommand('getTimezone', this._getTimezone.bind(this))
+    this._browser.addCommand('assertTimezone', this._assertTimezone.bind(this))
+    this._browser.addCommand('verifyTimezone', this._verifyTimezone.bind(this))
+    this._browser.addCommand('resetTimezone', this._resetTimezone.bind(this))
+    this._browser.addCommand('takeScreenshot', this._takeScreenshot.bind(this))
+    this._browser.addCommand('startImageInjection', this._startImageInjection.bind(this))
+    this._browser.addCommand('stopImageInjection', this._stopImageInjection.bind(this))
+    this._browser.addCommand('setFingerprint', this._setFingerprint.bind(this))
+    this._browser.addCommand('setSensorAuthentication', this._setSensorAuthentication.bind(this))
+    this._browser.addCommand('generateHAR', this._generateHAR.bind(this))
+    this._browser.addCommand('stopGenerateHAR', this._stopGenerateHAR.bind(this))
+    this._browser.addCommand('audioInject', this._audioInject.bind(this))
+    this._browser.addCommand('verifyAudioReceived', this._verifyAudioReceived.bind(this))
+    this._browser.addCommand('getDeviceProperty', this._getDeviceProperty.bind(this))
+  }
+     // The function forces 'this' to be the element, instead of TS default of this class.
+     _waitUntilOverwrite (
+      this: any, 
+      _origFunction: any,
+      condition: () => boolean | Promise<boolean>,
+      {
+        timeout = browser.options.waitforTimeout,
+        interval = browser.options.waitforInterval,
+        timeoutMsg
+      }: any
+    ) {
+    if (typeof condition !== 'function') {
+      throw new Error('Condition is not a function')
+    }
+  
+    /**
+     * ensure that timeout and interval are set properly
+     */
+    if (typeof timeout !== 'number') {
+      timeout = browser.options.waitforTimeout as number
+    }
+  
+    if (typeof interval !== 'number') {
+      interval = browser.options.waitforInterval as number
+    }
+  
+    const fn = condition.bind(this)
+    const timer = new NewTimer(
+      interval as number,
+      timeout as number,
+      fn,
+      true
+    )
+    return (timer as any).catch((e: Error) => {
+      if (e.message === 'timeout') {
+        if (typeof timeoutMsg === 'string') {
+          throw new Error(timeoutMsg)
+        }
+        throw new Error(`waitUntil condition timed out after ${timeout}ms`)
+      }
+  
+      throw new Error(
+        `waitUntil condition failed with the following reason: ${
+          (e && e.message) || e
+        }`
+      )
+    })
+  }
     /**
      * add perfecto commands
      */
@@ -135,69 +157,54 @@ export class perfectoService {
     /**
      * Report commands
      */
-    this._browser.addCommand(
-      'verify',
-      function (assertFnc: (arg0: any) => void, message: string): boolean {
-        try {
-          // browser.debug();
-          assertFnc(message)
-          // console.log('assertFnc', assertFnc)
-          // console.log('message', message)
-
-          browser.reportAssert(message, true)
-          return true
-        } catch (err) {
-          console.log('verify in catch' + err.toString()) // browser.debug();
-
-          // browser.failedOnVerify++
-          // browser.failMessages.push(err)
-          browser.reportAssert(err.toString(), false)
-          return false
-        }
-      }
-    )
-
-    this._browser.addCommand(
-      'assert',
-      function (assertFnc: (arg0: any) => void, message: string): boolean {
-        // TODOb add try 
+    _verify (assertFnc: (arg0: any) => void, message: string): boolean {
+      try {
+        // browser.debug();
         assertFnc(message)
+        // console.log('assertFnc', assertFnc)
+        // console.log('message', message)
+
         browser.reportAssert(message, true)
         return true
-      }
-    )
+      } catch (err) {
+        console.log('verify in catch' + err.toString()) // browser.debug();
 
-    this._browser.addCommand(
-      'assert',
-      function (message: string, status: boolean): void {
+        // browser.failedOnVerify++
+        // browser.failMessages.push(err)
+        browser.reportAssert(err.toString(), false)
+        return false
+      }
+    }
+    
+
+    _assert (assertFnc: (arg0: any) => void, message: string): boolean {
+      // TODOb add try 
+      assertFnc(message)
+      browser.reportAssert(message, true)
+      return true
+    }
+    
+
+    _reportAssert (message: string, status: boolean): void {
         browser.reportingClient.reportiumAssert(message, status)
       }
-    )
 
-    this._browser.addCommand(
-      'reportComment',
-      function (message: string): void {
+
+  _reportComment (message: string): void {
         const params = {
           text: message
         }
         browser.execute('mobile:comment', params)
       }
-    )
-
     /**
      * Device Utils
      */
 
-    this._browser.addCommand(
-      'startApp',
-      function (by: string, app: string): void {
+    _startApp (by: string, app: string): void {
         browser.execute('mobile:application:open', getAppParams(by, app))
       }
-    )
     // by = 'name' or 'identifier'
-    this._browser.addCommand(
-      'closeApp',
-      function (by: string, app: string, ignoreExceptions = false): void {
+    _closeApp (by: string, app: string, ignoreExceptions = false): void {
         try {
           browser.execute('mobile:application:close', getAppParams(by, app))
         } catch (err) {
@@ -206,10 +213,8 @@ export class perfectoService {
           }
         }
       }
-    )
-    this._browser.addCommand(
-      'installApp',
-      function (
+
+   _installApp (
         filePath: string,
         shouldInstrument: boolean,
         shouldSensorInstrument: boolean
@@ -225,28 +230,21 @@ export class perfectoService {
         }
         browser.execute('mobile:application:install', params)
       }
-    )
 
     // by = 'name' or 'identifier'
-    this._browser.addCommand(
-      'cleanApp',
-      function (by: string, app: string): void {
+    _cleanApp (by: string, app: string): void {
         browser.execute('mobile:application:clean', getAppParams(by, app))
       }
-    )
+
     // by = 'name' or 'identifier'
-    this._browser.addCommand(
-      'uninstallApp',
-      function (by: string, app: string): void {
+    _uninstallApp (by: string, app: string): void {
         browser.execute('mobile:application:uninstall', getAppParams(by, app))
       }
-    )
-    this._browser.addCommand('UninstallAllApps', function (): void {
+
+    _uninstallAllApps (): void {
       browser.execute('mobile:application:reset', {})
-    })
-    this._browser.addCommand(
-      'getAppInfo',
-      function (property: string): string {
+    }
+    _getAppInfo (property: string): string {
         const params = {
           property: property
         }
@@ -254,11 +252,9 @@ export class perfectoService {
         log.info('GetAppInfo - ${result}')
         return result.value
       }
-    )
+    
 
-    this._browser.addCommand(
-      'verifyAppInfo',
-      function (propertyName: string, propertyValue: any) {
+    _verifyAppInfo (propertyName: string, propertyValue: any) {
         const message = `${propertyName} should be ${propertyValue}`
         const assertMethod = () =>
           expect(propertyValue).toEqual(
@@ -267,10 +263,8 @@ export class perfectoService {
         //const assertMethod = () => assert.equal(propertyValue, browser.GetAppInfo(propertyName), message)
         return browser.verify(assertMethod, message)
       }
-    )
-    this._browser.addCommand(
-      'assertAppInfo',
-      function (propertyName: string, propertyValue: any) {
+
+    _assertAppInfo (propertyName: string, propertyValue: any) {
         const message = `${propertyName} must be ${propertyValue}`
         const assertMethod = () =>
           expect(propertyValue).toEqual(
@@ -279,10 +273,8 @@ export class perfectoService {
         //const assertMethod = () => assert.equal(propertyValue, browser.GetAppInfo(propertyName), message)
         return browser.assert(assertMethod, message)
       }
-    )
-    this._browser.addCommand(
-      'waitForPresentTextVisual',
-      function (text: string, timeout: number): void {
+
+    _waitForPresentTextVisual (text: string, timeout: number): void {
         const message = `Text: ${text} should be present after ${timeout} seconds`
         const assertMethod = () =>
           expect('true').toEqual(
@@ -291,10 +283,7 @@ export class perfectoService {
         //onst assertMethod = () =>assert.equal(browser.FindText(text, timeout), 'true', `Text: ${text} should be present after ${seconds} seconds`)
         browser.assert(assertMethod, message)
       }
-    )
-    this._browser.addCommand(
-      'waitForPresentImageVisual',
-      function (
+    _waitForPresentImageVisual (
         img: string,
         timeout: number,
         threshold = 90,
@@ -309,12 +298,10 @@ export class perfectoService {
         browser.assert(assertMethod, message)
         //assert.equal(browser.FindImage(img, timeout, threshold, needleBound), 'true', `Image: ${img} should be visible after ${seconds} seconds`)
       }
-    )
+  
     // pass external parameters
     // TODO : test vars
-    this._browser.addCommand(
-      'findImage',
-      function (
+    _findImage (
         img: string,
         timeout: number,
         threshold = 90,
@@ -336,11 +323,9 @@ export class perfectoService {
         log.info('FindImage - ${result}')
         return result.value
       }
-    )
+    
     // TODO: check passing seconds 60, 180 - getting threading errors
-    this._browser.addCommand(
-      'assertVisualImage',
-      function (
+    _assertVisualImage (
         img: string,
         timeout: number,
         threshold = 90,
@@ -355,10 +340,8 @@ export class perfectoService {
         //const assertMethod = () => assert.equal(browser.FindImage(img, timeout, threshold, needleBound), 'true', message)
         return browser.assert(assertMethod, message)
       }
-    )
-    this._browser.addCommand(
-      'verifyVisualImage',
-      function (
+    
+    _verifyVisualImage (
         img: string,
         timeout: any,
         threshold = 90,
@@ -372,7 +355,7 @@ export class perfectoService {
           )
         return browser.verify(assertMethod, message)
       }
-    )
+    
     /**
      * Visual Text Checkpoint based on the text sent in and a threshold of 100
      *
@@ -382,9 +365,7 @@ export class perfectoService {
      *            - timeout amount to search
      * @return true if found or false if not found
      */
-    this._browser.addCommand(
-      'findText',
-      function (text: string, timeout: number): string {
+    _findText (text: string, timeout: number): string {
         const params: any = {
           content: text,
           threshold: '100'
@@ -397,11 +378,9 @@ export class perfectoService {
         log.info('FindText - ${result}')
         return result.value
       }
-    )
+    
     // TODO: check verify options
-    this._browser.addCommand(
-      'assertVisualText',
-      function (text: string): boolean {
+    _assertVisualText (text: string): boolean {
         const message = `Text: ${text} must be present`
         const assertMethod = () =>
           expect('true').toEqual(browser.findText(text, 180))
@@ -409,16 +388,14 @@ export class perfectoService {
         //                const assertMethod = () => assert.equal(browser.FindText(text, 180), 'true', message)
         return browser.assert(assertMethod, message)
       }
-    )
-    this._browser.addCommand(
-      'verifyVisualText',
-      function (text: string): boolean {
+    
+    _verifyVisualText (text: string): boolean {
         const message = `Text: ${text} should be present`
         const assertMethod = () =>
           expect('true').toEqual(browser.findText(text, 180))
         return browser.verify(assertMethod, message)
       }
-    )
+    
 
     /**
      * Clicks on a single or sequence of physical device keys. Mouse-over the device
@@ -434,15 +411,13 @@ export class perfectoService {
      * @param keySequence
      *            the single or sequence of keys to click
      */
-    this._browser.addCommand(
-      'pressKey',
-      function (keySequence: string): void {
+    _pressKey (keySequence: string): void {
         const params = {
           keySequence: keySequence
         }
         browser.execute('mobile:presskey', params)
       }
-    )
+    
 
     /**
      * orms the swipe gesture according to the start and end coordinates.
@@ -457,16 +432,14 @@ export class perfectoService {
      *            write in format of x,y. can be in pixels or
      *            percentage(recommended).
      */
-    this._browser.addCommand(
-      'swipe',
-      function (start: string, end: string): void {
+    _swipe (start: string, end: string): void {
         const params = {
           start: start,
           end: end
         }
         browser.execute('mobile:touch:swipe', params)
       }
-    )
+    
 
     /**
      * orms the tap gesture according to location coordinates with durations in
@@ -480,9 +453,7 @@ export class perfectoService {
      * @param seconds
      *            The duration, in seconds, for orming the touch operation.
      */
-    this._browser.addCommand(
-      'longTouch',
-      function (point: string, seconds = 2): void {
+    _longTouch (point: string, seconds = 2): void {
         const params = {
           location: point,
           operation: 'single',
@@ -490,7 +461,7 @@ export class perfectoService {
         }
         browser.execute('mobile:touch:tap', params)
       }
-    )
+    
 
     /**
      * orms the touch gesture according to the point coordinates.
@@ -499,13 +470,13 @@ export class perfectoService {
      *            write in format of x,y. can be in pixels or
      *            percentage(recommended).
      */
-    this._browser.addCommand('touch', function (point: string): void {
+    _touch (point: string): void {
       const params = {
         location: point // 50%,50%
       }
 
       browser.execute('mobile:touch:tap', params)
-    })
+    }
 
     /**
      * orms the double touch gesture according to the point coordinates.
@@ -514,27 +485,25 @@ export class perfectoService {
      *            write in format of x,y. can be in pixels or
      *            percentage(recommended).
      */
-    this._browser.addCommand(
-      'doubleTouch',
-      function (point: string): void {
+    _doubleTouch (point: string): void {
         const params = {
           location: point, // 50%,50%
           operation: 'double'
         }
         browser.execute('mobile:touch:tap', params)
       }
-    )
+    
 
     /**
      * Hides the virtual keyboard display.
      *
      */
-    this._browser.addCommand('hideKeyboard', function (): void {
+    _hideKeyboard (): void {
       const params = {
         mode: 'off'
       }
       browser.execute('mobile:keyboard:display', params)
-    })
+    }
 
     /**
      * Rotates the device to landscape, portrait, or its next state.
@@ -545,126 +514,106 @@ export class perfectoService {
      *            the 'state' or 'operation'
      */
     // TODO: need additional description.
-    this._browser.addCommand(
-      'rotateDevice',
-      function (by: string | number, restValue: string): void {
+    _rotateDevice (by: string | number, restValue: string): void {
         const params: any = {}
         params[by] = restValue
         browser.execute('mobile:handset:rotate', params)
       }
-    )
+    
 
     // by = 'address' or 'coordinates'
-    this._browser.addCommand(
-      'setLocation',
-      function (by: string | number, location: string): void {
+   _setLocation (by: string | number, location: string): void {
         const params: any = {}
         params[by] = location
 
         browser.execute('mobile:location:set', params)
       }
-    )
+    
 
-    this._browser.addCommand(
-      'assertLocation',
-      function (location: string): boolean {
+   _assertLocation (location: string): boolean {
         const deviceLocation = browser.getDeviceLocation()
         const message = `Device Location ${deviceLocation.toString()} must be equal ${location}`
         // const assertMethod = () => assert.equal(deviceLocation, location, message)
         const assertMethod = () => expect(location).toEqual(deviceLocation)
         return browser.assert(assertMethod, message)
       }
-    )
+    
 
-    this._browser.addCommand(
-      'verifyLocation',
-      function (location: string): boolean {
+    _verifyLocation (location: string): boolean {
         const deviceLocation = browser.getDeviceLocation()
         const message = `Device Location ${deviceLocation.toString()} should be equal ${location}`
         const assertMethod = () => expect(location).toEqual(deviceLocation)
         return browser.verify(assertMethod, message)
       }
-    )
+    
 
-    this._browser.addCommand('getDeviceLocation', function (): string {
+    _getDeviceLocation (): string {
       return (browser.execute('mobile:location:get', {}) as unknown) as string
-    })
+    }
 
-    this._browser.addCommand('resetLocation', function (): void {
+    _resetLocation (): void {
       browser.execute('mobile:location:reset', {})
-    })
+    }
 
-    this._browser.addCommand('goToHomeScreen', function (): void {
+    _goToHomeScreen (): void {
       const params = {
         target: 'All'
       }
       browser.execute('mobile:handset:ready', params)
-    })
+    }
 
-    this._browser.addCommand(
-      'lockDevice',
-      function (sec: number): void {
+    _lockDevice (sec: number): void {
         const params = {
           timeout: sec
         }
         browser.execute('mobile:screen:lock', params)
       }
-    )
+    
 
-    this._browser.addCommand(
-      'setTimezone',
-      function (timezone: string): void {
+    _setTimezone (timezone: string): void {
         const params = {
           timezone: timezone
         }
 
         browser.execute('mobile:timezone:set', params)
       }
-    )
+    
 
-    this._browser.addCommand('getTimezone', function (): string {
+    _getTimezone (): string {
       return (browser.execute('mobile:timezone:get', {}) as unknown) as string
-    })
+    }
 
-    this._browser.addCommand(
-      'assertTimezone',
-      function (timezone: string): boolean {
+    _assertTimezone (timezone: string): boolean {
         const deviceTimezone = browser.getTimezone()
         const message = `Device timezone ${deviceTimezone} must be equal ${timezone}`
         const assertMethod = () => expect(timezone).toEqual(deviceTimezone)
         return browser.assert(assertMethod, message)
       }
-    )
+    
 
-    this._browser.addCommand(
-      'verifyTimezone',
-      function (timezone: any) {
+    _verifyTimezone (timezone: any) {
         const deviceTimezone = browser.getTimezone()
         const message = `Device timezone ${deviceTimezone} should be equal ${timezone}`
         const assertMethod = () => expect(timezone).toEqual(deviceTimezone)
         return browser.verify(assertMethod, message)
       }
-    )
+    
 
-    this._browser.addCommand('resetTimezone', function (): void {
+    _resetTimezone (): void {
       browser.execute('mobile:timezone:reset', {})
-    })
+    }
 
-    this._browser.addCommand(
-      'takeScreenshot',
-      function (repositoryPath: string, shouldSave: boolean): void {
+    _takeScreenshot (repositoryPath: string, shouldSave: boolean): void {
         const params: any = {}
         if (shouldSave) {
           params.key = repositoryPath
         }
         browser.execute('mobile:screen:image', params)
       }
-    )
+    
 
     // by = 'name' or 'identifier'
-    this._browser.addCommand(
-      'startImageInjection',
-      function (
+    _startImageInjection (
         repositoryFile: string,
         by: string | number,
         app: string
@@ -674,14 +623,12 @@ export class perfectoService {
         params[by] = app
         browser.execute('mobile:image.injection:start', params)
       }
-    )
-    this._browser.addCommand('stopImageInjection', function (): void {
+    
+    _stopImageInjection (): void {
       browser.execute('mobile:image.injection:stop', {})
-    })
+    }
 
-    this._browser.addCommand(
-      'setFingerprint',
-      function (
+    _setFingerprint (
         by: string | number,
         identifier: string,
         resultAuth: string,
@@ -698,11 +645,10 @@ export class perfectoService {
 
         browser.execute('mobile:fingerprint:set', params)
       }
-    )
+    
 
-    this._browser.addCommand(
-      'setSensorAuthentication',
-      function (
+    
+    _setSensorAuthentication (
         by: string,
         identifier: string,
         resultAuth: string,
@@ -715,31 +661,29 @@ export class perfectoService {
 
         browser.execute('mobile:sensorAuthentication:set', params)
       }
-    )
+    
 
-    this._browser.addCommand('generateHAR', function (): void {
+    _generateHAR (): void {
       const params = {
         generateHarFile: 'true'
       }
       browser.execute('mobile:vnetwork:start', params)
-    })
+    }
 
-    this._browser.addCommand('stopGenerateHAR', function (): void {
+    _stopGenerateHAR(): void {
       browser.execute('mobile:vnetwork:stop', {})
-    })
+    }
 
-    this._browser.addCommand(
-      'audioInject',
-      function (filePath: string): void {
+    _audioInject (filePath: string): void {
         const params = {
           key: filePath,
           wait: 'nowait'
         }
         browser.execute('mobile:audio:inject', params)
       }
-    )
+    
 
-    this._browser.addCommand('verifyAudioReceived', function (): void {
+    _verifyAudioReceived (): void {
       // The below settings have been working with best and consistent results for
       // different devices. In case these settings does not work for you then try
       // changing the configurations.
@@ -757,11 +701,9 @@ export class perfectoService {
         'Audio checkpoint status ',
         audioCheckpointStatus
       )
-    })
+    }
 
-    this._browser.addCommand(
-      'getDeviceProperty',
-      function (property: string): string {
+    _getDeviceProperty (property: string): string {
         const params = {
           property: property
         }
@@ -769,9 +711,8 @@ export class perfectoService {
         log.info('getDeviceProperty - ${result}')
         return result.value
       }
-    )
-  }
-
+    
+  
   // beforeTest (test: any) {
   //     /**
   //      * Date:    20200714
@@ -1055,3 +996,77 @@ export class perfectoService {
 // afterStep?(step: StepData, context: World, result: { error?: any, result?: any, passed: boolean, duration: number }): void;
 // afterScenario?(uri: string, feature: CucumberHookObject, scenario: CucumberHookObject, result: CucumberHookResult, sourceLocation: SourceLocation, context?: World): void;
 // afterFeature?(uri: string, feature: CucumberHookObject, scenarios: CucumberHookObject[]): void;
+export * from './types'
+
+type ServiceCommands = FunctionProperties<PerfectoService>
+interface BrowserExtension {
+
+    verify: ServiceCommands['_verify']
+    assert: ServiceCommands['_assert']
+    reportAssert: ServiceCommands['_reportAssert']
+    reportComment: ServiceCommands['_reportComment']
+    startApp: ServiceCommands['_startApp']
+    closeApp: ServiceCommands['_closeApp']
+    installApp: ServiceCommands['_installApp']
+    cleanApp: ServiceCommands['_cleanApp']
+    uninstallApp: ServiceCommands['_uninstallApp']
+    uninstallAllApps: ServiceCommands['_uninstallAllApps']
+    getAppInfo: ServiceCommands['_getAppInfo']
+    verifyAppInfo: ServiceCommands['_verifyAppInfo']
+    assertAppInfo: ServiceCommands['_assertAppInfo']
+    waitForPresentTextVisual: ServiceCommands['_waitForPresentTextVisual']
+    waitForPresentImageVisual: ServiceCommands['_waitForPresentImageVisual']
+    findImage: ServiceCommands['_findImage']
+
+    assertVisualImage: ServiceCommands['_assertVisualImage']
+    verifyVisualImage: ServiceCommands['_verifyVisualImage']
+    findText: ServiceCommands['_findText']
+    assertVisualText: ServiceCommands['_assertVisualText']
+    verifyVisualText: ServiceCommands['_verifyVisualText']
+    pressKey: ServiceCommands['_pressKey']
+    longTouch: ServiceCommands['_longTouch']
+    touch: ServiceCommands['_touch']
+    doubleTouch: ServiceCommands['_doubleTouch']
+    hideKeyboard: ServiceCommands['_hideKeyboard']
+    rotateDevice: ServiceCommands['_rotateDevice']
+    setLocation: ServiceCommands['_setLocation']
+    assertLocation: ServiceCommands['_assertLocation']
+    verifyLocation: ServiceCommands['_verifyLocation']
+    getDeviceLocation: ServiceCommands['_getDeviceLocation']
+    resetLocation: ServiceCommands['_resetLocation']
+    goToHomeScreen: ServiceCommands['_goToHomeScreen']
+    lockDevice: ServiceCommands['_lockDevice']
+    setTimezone: ServiceCommands['_setTimezone']
+    getTimezone: ServiceCommands['_getTimezone']
+    assertTimezone: ServiceCommands['_assertTimezone']
+    verifyTimezone: ServiceCommands['_verifyTimezone']
+    resetTimezone: ServiceCommands['_resetTimezone']
+    takeScreenshot: ServiceCommands['_takeScreenshot']
+    startImageInjection: ServiceCommands['_startImageInjection']
+    stopImageInjection: ServiceCommands['_stopImageInjection']
+    setFingerprint: ServiceCommands['_setFingerprint']
+    setSensorAuthentication: ServiceCommands['_setSensorAuthentication']
+    generateHAR: ServiceCommands['_generateHAR']
+    stopGenerateHAR: ServiceCommands['_stopGenerateHAR']
+    audioInject: ServiceCommands['_audioInject']
+    verifyAudioReceived: ServiceCommands['_verifyAudioReceived']
+    getDeviceProperty: ServiceCommands['_getDeviceProperty']
+
+    reportingClient?: any
+}
+
+declare global {
+  namespace WebdriverIO {
+      interface ServiceOption extends PerfectoServiceConfig {}
+  }
+
+  namespace WebdriverIOAsync {
+      interface Browser extends BrowserExtension { }
+      interface MultiRemoteBrowser extends BrowserExtension { }
+  }
+
+  namespace WebdriverIOSync {
+      interface Browser extends BrowserExtension { }
+      interface MultiRemoteBrowser extends BrowserExtension { }
+  }
+}
